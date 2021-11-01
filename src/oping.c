@@ -1734,7 +1734,7 @@ static int post_loop_hook (pingobj_t *ping) /* {{{ */
 		context_destroy (context);
 		*/
 
-		printf("oping,host=\"%s\" ", context->host);
+		printf("oping,host=%s ", context->host);
 		if (context->req_rcvd != 0)
 		{
 			double min;

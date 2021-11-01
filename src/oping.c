@@ -1492,8 +1492,8 @@ static int pre_loop_hook (pingobj_t *ping) /* {{{ */
 		buffer_size = 0;
 		ping_iterator_get_info (iter, PING_INFO_DATA, NULL, &buffer_size);
 
-		printf ("PING %s (%s) %zu bytes of data.\n",
-				ctx->host, ctx->addr, buffer_size);
+		// printf ("PING %s (%s) %zu bytes of data.\n",
+		// 		ctx->host, ctx->addr, buffer_size);
 	}
 
 	return (0);
@@ -1616,16 +1616,16 @@ static void update_host_hook (pingobj_iter_t *iter, /* {{{ */
 		else
 		{
 #endif
-		HOST_PRINTF ("%zu bytes from %s (%s): icmp_seq=%u ttl=%i ",
-				data_len,
-				context->host, context->addr,
-				sequence, recv_ttl);
-		if ((recv_qos != 0) || (opt_send_qos != 0))
-		{
-			HOST_PRINTF ("qos=%s ",
-					format_qos (recv_qos, recv_qos_str, sizeof (recv_qos_str)));
-		}
-		HOST_PRINTF ("time=%.2f ms\n", latency);
+		// HOST_PRINTF ("%zu bytes from %s (%s): icmp_seq=%u ttl=%i ",
+		// 		data_len,
+		// 		context->host, context->addr,
+		// 		sequence, recv_ttl);
+		// if ((recv_qos != 0) || (opt_send_qos != 0))
+		// {
+		// 	HOST_PRINTF ("qos=%s ",
+		// 			format_qos (recv_qos, recv_qos_str, sizeof (recv_qos_str)));
+		// }
+		// HOST_PRINTF ("time=%.2f ms\n", latency);
 #if USE_NCURSES
 		}
 #endif
@@ -1653,9 +1653,9 @@ static void update_host_hook (pingobj_iter_t *iter, /* {{{ */
 		else
 		{
 #endif
-		HOST_PRINTF ("echo reply from %s (%s): icmp_seq=%u timeout\n",
-				context->host, context->addr,
-				sequence);
+		// HOST_PRINTF ("echo reply from %s (%s): icmp_seq=%u timeout\n",
+		// 		context->host, context->addr,
+		// 		sequence);
 #if USE_NCURSES
 		}
 #endif
@@ -1700,7 +1700,7 @@ static int post_loop_hook (pingobj_t *ping) /* {{{ */
 		ping_context_t *context;
 
 		context = ping_iterator_get_context (iter);
-
+		/*
 		printf ("\n--- %s ping statistics ---\n"
 				"%i packets transmitted, %i received, %.2f%% packet loss, time %.1fms\n",
 				context->host, context->req_sent, context->req_rcvd,
@@ -1732,6 +1732,24 @@ static int post_loop_hook (pingobj_t *ping) /* {{{ */
 
 		ping_iterator_set_context (iter, NULL);
 		context_destroy (context);
+		*/
+
+		printf("oping,host=\"%s\" ", context->host);
+		if (context->req_rcvd != 0)
+		{
+			double min;
+			double median;
+			double max;
+
+			min = percentile_to_latency(context, 0.0);
+			median = percentile_to_latency(context, 50.0);
+			max = percentile_to_latency(context, 100.0);
+			printf("min=%.2f,median=%.2f,max=%.2f,",
+				   min, median, max);
+		}
+		printf("loss=%.2f\n", context_get_packet_loss(context));
+		ping_iterator_set_context(iter, NULL);
+		context_destroy(context);
 	}
 
 	return (failure_count);
@@ -1739,6 +1757,7 @@ static int post_loop_hook (pingobj_t *ping) /* {{{ */
 
 int main (int argc, char **argv) /* {{{ */
 {
+	struct timeval tv;
 	pingobj_t      *ping;
 	pingobj_iter_t *iter;
 
@@ -1752,6 +1771,7 @@ int main (int argc, char **argv) /* {{{ */
 	int optind;
 	int i;
 	int status;
+	gettimeofday(&tv, NULL);
 #if _POSIX_SAVED_IDS
 	uid_t saved_set_uid;
 
@@ -2071,6 +2091,11 @@ int main (int argc, char **argv) /* {{{ */
 
 	ping_destroy (ping);
 
+	struct timeval begin = tv;
+	gettimeofday(&tv, NULL);
+	long runtime = (tv.tv_sec * 1000000L + tv.tv_usec) - (begin.tv_sec * 1000000L + begin.tv_usec);
+	printf("poller_stats,name=\"oping\" runtime=%.12f\n", (double)runtime/1000000);
+
 	if (outfile != NULL)
 	{
 		fclose (outfile);
@@ -2085,6 +2110,7 @@ int main (int argc, char **argv) /* {{{ */
 			status = 255;
 		exit (status);
 	}
+
 } /* }}} int main */
 
 /* vim: set fdm=marker : */

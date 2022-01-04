@@ -1754,44 +1754,11 @@ static int post_loop_hook(pingobj_t *ping) /* {{{ */
 		ping_context_t *context;
 
 		context = ping_iterator_get_context(iter);
-		/*
-		printf ("\n--- %s ping statistics ---\n"
-				"%i packets transmitted, %i received, %.2f%% packet loss, time %.1fms\n",
-				context->host, context->req_sent, context->req_rcvd,
-				context_get_packet_loss (context),
-				context->latency_total);
-
-		{
-			double pct_failed = 1.0 - (((double) context->req_rcvd)
-					/ ((double) context->req_sent));
-			if (pct_failed > opt_exit_status_threshold)
-				failure_count++;
-		}
-
-		if (context->req_rcvd != 0)
-		{
-			double min;
-			double median;
-			double max;
-			double percentile;
-
-			min = percentile_to_latency (context, 0.0);
-			median = percentile_to_latency (context, 50.0);
-			max = percentile_to_latency (context, 100.0);
-			percentile = percentile_to_latency (context, opt_percentile);
-
-			printf ("RTT[ms]: min = %.0f, median = %.0f, p(%.0f) = %.0f, max = %.0f\n",
-					min, median, opt_percentile, percentile, max);
-		}
-
-		ping_iterator_set_context (iter, NULL);
-		context_destroy (context);
-		*/
 
 		/* First host, print the beginning of our JSON */
 		if (cur_host_num == host_num)
 		{
-			printf("{\"hosts\": %d, \"results\": [", host_num);
+			printf("{\"hosts\": %d, \"results\": {", host_num);
 		}
 
 		// printf("oping,host=%s ", context->host);
@@ -1821,7 +1788,7 @@ static int post_loop_hook(pingobj_t *ping) /* {{{ */
 			if (!isnan(d_avg))
 				snprintf(avg, 10, "%.2f", d_avg);
 		}
-		printf("{\"%s\": {\"min\":%s,\"median\":%s,\"avg\":%s,\"max\":%s, \"loss\":%.2f}}",
+		printf("\"%s\": {\"min\":%s,\"median\":%s,\"avg\":%s,\"max\":%s, \"loss\":%.2f}",
 			   context->host,
 			   min,
 			   median,
@@ -1832,7 +1799,7 @@ static int post_loop_hook(pingobj_t *ping) /* {{{ */
 		cur_host_num--;
 		context_destroy(context);
 		if (cur_host_num == 0)
-			printf("]}");
+			printf("}}");
 		else
 			printf(",");
 	}
